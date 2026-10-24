@@ -4,32 +4,24 @@
 
 SOLARSPACE 是一个本机运行的 Apple Silicon macOS 客户端。它提供爱士惟账户只读连接、电站与设备查看、总览发电趋势（本月按天 / 本年按月 / 累计按年，可切换发电量与收益）、电站实时能流与运行档案、跨电站告警中心、逆变器实时数据、发电统计（本月 / 本年，直流与交流）和历史折线图、质保查询、离线示例模式及 CSV 导出。日常使用直接打开 `.app`，不需要启动网页服务器。
 
-## 打开或构建
+## 构建与运行
 
-当前目录已有打包应用：
+需要 Node.js 22.18 或更新版本。
+
+```sh
+npm install
+npm run desktop:start     # 编译界面并以桌面应用启动
+npm test                  # 运行本地测试
+npm run desktop:build     # 打包 Apple Silicon .app
+```
+
+打包结果位于：
 
 ```text
 release/SolarSpace-darwin-arm64/SolarSpace.app
 ```
 
-该本地构建未经过 Apple Developer ID 签名或公证，首次打开时 macOS 可能显示安全提示。需要 Node.js 22.18 或更新版本才能从源码运行或重新打包：
-
-```sh
-npm install
-npm start
-```
-
-`npm start` 直接加载 `dist/` 中的本地构建文件；如要先重新编译界面，运行 `npm run desktop:start`。重新打包 Apple Silicon `.app`：
-
-```sh
-npm run desktop:build
-```
-
-验证本地数据导出、API 路由白名单、请求格式和曲线数据处理：
-
-```sh
-npm test
-```
+该构建未经过 Apple Developer ID 签名或公证，首次打开时 macOS 可能显示安全提示（右键 → 打开）。
 
 ## 账户与数据
 
