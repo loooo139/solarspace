@@ -1,0 +1,31 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run desktop:build
+      - name: Package app
+        run: |
+          cd release/SolarSpace-darwin-arm64
+          ditto -c -k --sequesterRsrc --keepParent SolarSpace.app "$RUNNER_TEMP/SolarSpace-macOS-arm64.zip"
+      - name: Attach build to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "SOLARSPACE $GITHUB_REF_NAME" --generate-notes
+          gh release upload "$GITHUB_REF_NAME" "$RUNNER_TEMP/SolarSpace-macOS-arm64.zip" --clobber
