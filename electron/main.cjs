@@ -9,7 +9,7 @@ const LOGIN_ORIGIN = "https://www.aisweicloud.com";
 // Resume a previously authenticated browser profile; the service redirects
 // unauthenticated sessions back to its own login route.
 const LOGIN_URL = `${LOGIN_ORIGIN}/home`;
-const VALID_VIEWS = new Set(["overview", "plants", "devices", "service"]);
+const VALID_VIEWS = new Set(["overview", "plants", "devices", "service", "alerts"]);
 const PREFS_FILE = () => path.join(app.getPath("userData"), "preferences.json");
 const loginSession = () => session.fromPartition("persist:solar-account");
 let mainWindow;
@@ -232,14 +232,14 @@ function isAllowedLoginUrl(value) {
 
 function installMenu() {
   const template = [
-    {
+    ...(process.platform === "darwin" ? [{
       label: app.name,
       submenu: [
         { label: "关于 SOLARSPACE", role: "about" },
         { type: "separator" },
         { label: "退出", role: "quit" },
       ],
-    },
+    }] : []),
     {
       label: "编辑",
       submenu: [
@@ -257,12 +257,14 @@ function installMenu() {
     },
     {
       label: "窗口",
-      submenu: [{ role: "minimize" }, { role: "close" }, { role: "front" }],
+      submenu: process.platform === "darwin"
+        ? [{ role: "minimize" }, { role: "close" }, { role: "front" }]
+        : [{ role: "minimize" }, { role: "close" }],
     },
     {
       label: "导航",
       submenu: [
-        ...[["总览", "overview"], ["电站管理", "plants"], ["设备管理", "devices"], ["服务与质保", "service"]]
+        ...[["总览", "overview"], ["电站管理", "plants"], ["设备管理", "devices"], ["告警中心", "alerts"], ["服务与质保", "service"]]
           .map(([label, view]) => ({ label, click: () => navigate(view) })),
         { type: "separator" },
         { label: "退出演示", click: () => mainWindow?.webContents.send("desktop:logout") },

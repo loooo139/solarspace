@@ -14,16 +14,34 @@ SOLARSPACE 是一个本机运行的 Apple Silicon macOS 客户端。它提供爱
 npm install
 npm run desktop:start     # 编译界面并以桌面应用启动
 npm test                  # 运行本地测试
-npm run desktop:build     # 打包 Apple Silicon .app
+npm run desktop:build     # 打包当前平台
 ```
 
-打包结果位于：
+指定平台与架构打包：
 
-```text
-release/SolarSpace-darwin-arm64/SolarSpace.app
+```sh
+node scripts/package.cjs --platform=darwin --arch=arm64   # macOS Apple Silicon
+node scripts/package.cjs --platform=darwin --arch=x64     # macOS Intel
+node scripts/package.cjs --platform=win32  --arch=x64     # Windows（建议在 Windows 上执行）
 ```
 
-该构建未经过 Apple Developer ID 签名或公证，首次打开时 macOS 可能显示安全提示（右键 → 打开）。
+产物位于 `release/SolarSpace-<platform>-<arch>/`。也可以直接从 [Releases](https://github.com/loooo139/solarspace/releases) 下载 CI 构建好的安装包。
+
+### 平台支持
+
+| 平台 | 状态 | 说明 |
+|---|---|---|
+| macOS Apple Silicon | ✅ | `SolarSpace-macOS-arm64.zip` |
+| macOS Intel | ✅ | `SolarSpace-macOS-x64.zip` |
+| Windows x64 | ✅ | `SolarSpace-Windows-x64.zip` |
+| Linux | ⚠️ 未测试 | Electron 理论上可打包，未做验证 |
+| Android / iOS | ❌ | Electron 不支持移动端，需要单独的移动客户端（见下） |
+
+构建未签名：macOS 首次打开请右键 → 打开；Windows 可能出现 SmartScreen 提示，选择“更多信息 → 仍要运行”。
+
+### 关于移动端
+
+Android 无法由当前 Electron 代码直接打包。登录依赖隔离窗口的 Cookie 会话，接口调用由 Electron 主进程代理；移动端需要重新实现登录态与外网请求桥接。可行路径是新增 Capacitor/React Native 工程，复用 `src/` 的界面与 `live.ts` 的接口契约，并用原生 HTTP 层持有 Cookie。这部分尚未开始。
 
 ## 账户与数据
 

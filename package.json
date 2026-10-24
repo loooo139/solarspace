@@ -10,7 +10,9 @@
     "start": "electron .",
     "test": "node --test",
     "desktop:start": "npm run build && npm start",
-    "desktop:build": "npm run build && node scripts/package-macos.cjs"
+    "desktop:build": "npm run build && node scripts/package.cjs",
+    "desktop:build:mac": "npm run build && node scripts/package.cjs --platform=darwin --arch=arm64",
+    "desktop:build:win": "npm run build && node scripts/package.cjs --platform=win32 --arch=x64"
   },
   "dependencies": {
     "react": "^18.3.1",

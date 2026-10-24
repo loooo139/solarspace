@@ -14,8 +14,25 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  macos:
-    runs-on: macos-14
+  build:
+    name: ${{ matrix.asset }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+            platform: darwin
+            arch: arm64
+            asset: SolarSpace-macOS-arm64.zip
+          - os: macos-14
+            platform: darwin
+            arch: x64
+            asset: SolarSpace-macOS-x64.zip
+          - os: windows-latest
+            platform: win32
+            arch: x64
+            asset: SolarSpace-Windows-x64.zip
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,26 +41,50 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      - run: npm run desktop:build
+      - run: npm run build
       - name: Package app
+        run: node scripts/package.cjs --platform=${{ matrix.platform }} --arch=${{ matrix.arch }}
+      - name: Archive app (macOS)
+        if: runner.os == 'macOS'
         run: |
-          cd release/SolarSpace-darwin-arm64
-          ditto -c -k --sequesterRsrc --keepParent SolarSpace.app "$RUNNER_TEMP/SolarSpace-macOS-arm64.zip"
+          cd "release/SolarSpace-${{ matrix.platform }}-${{ matrix.arch }}"
+          ditto -c -k --sequesterRsrc --keepParent SolarSpace.app "$RUNNER_TEMP/${{ matrix.asset }}"
+      - name: Archive app (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "release/SolarSpace-${{ matrix.platform }}-${{ matrix.arch }}/*" -DestinationPath "$env:RUNNER_TEMP/${{ matrix.asset }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: ${{ runner.temp }}/${{ matrix.asset }}
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
       - name: Publish versioned release
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "SOLARSPACE $GITHUB_REF_NAME" --generate-notes
-          gh release upload "$GITHUB_REF_NAME" "$RUNNER_TEMP/SolarSpace-macOS-arm64.zip" --clobber
+          gh release upload "$GITHUB_REF_NAME" dist/*.zip --clobber
       - name: Publish rolling main build
         if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
-          SHA_SHORT=$(git rev-parse --short HEAD)
-          BODY=$(printf '自动构建自主分支 `main` 的最新提交。\n\n- 提交：`%s`\n- 构建时间：%s\n- 运行记录：%s/%s/actions/runs/%s\n\n这是未签名的预发布构建，macOS 首次打开请右键 → 打开。' \
+          SHA_SHORT="${GITHUB_SHA::7}"
+          BODY=$(printf '自动构建自主分支 `main` 的最新提交。\n\n- 提交：`%s`\n- 构建时间：%s\n- 运行记录：%s/%s/actions/runs/%s\n\n包含 macOS（Apple Silicon / Intel）与 Windows 安装包；均为未签名构建。macOS 首次打开请右键 → 打开，Windows 可能提示 SmartScreen。' \
             "$SHA_SHORT" "$(date -u '+%Y-%m-%d %H:%M UTC')" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID")
           gh release view latest >/dev/null 2>&1 || gh release create latest --prerelease --title "Latest build (main)"
           gh release edit latest --prerelease --title "Latest build (main)" --notes "$BODY" --target "$GITHUB_SHA"
-          gh release upload latest "$RUNNER_TEMP/SolarSpace-macOS-arm64.zip" --clobber
+          gh release upload latest dist/*.zip --clobber
