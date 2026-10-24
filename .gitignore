@@ -1,0 +1,10 @@
+node_modules/
+dist/
+release/
+.sites-runtime/
+.DS_Store
+.env
+.env.*
+*.log
+coverage/
+tsconfig.tsbuildinfo

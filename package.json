@@ -1,0 +1,48 @@
+{
+  "name": "solarspace",
+  "version": "1.2.0",
+  "private": true,
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc -b && vite build",
+    "start": "electron .",
+    "test": "node --test",
+    "desktop:start": "npm run build && npm start",
+    "desktop:build": "npm run build && node scripts/package-macos.cjs"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.3.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^45.0.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.1"
+  },
+  "description": "macOS desktop client for AISWEI solar accounts: read-only plants, inverters, production trends, alerts and warranty lookups.",
+  "license": "MIT",
+  "author": "SolarSpace contributors",
+  "keywords": [
+    "solar",
+    "macos",
+    "electron",
+    "react",
+    "aiswei",
+    "photovoltaic",
+    "read-only"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/loooo139/solarspace.git"
+  },
+  "homepage": "https://github.com/loooo139/solarspace",
+  "bugs": {
+    "url": "https://github.com/loooo139/solarspace/issues"
+  }
+}
